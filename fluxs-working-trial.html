@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>FLUXS - Energy Timing Algorithm</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 100%;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo {
+            font-size: 32px;
+        }
+        
+        .header-title {
+            font-size: 20px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .logout-btn {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            color: #3b82f6;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        main {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .screen {
+            display: none;
+        }
+        
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* LOGIN SCREEN */
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .login-card {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
+            padding: 32px 24px;
+            max-width: 100%;
+            width: 100%;
+        }
+        
+        .login-logo {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .login-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .login-subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .login-hero {
+            color: #d97706;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .login-description {
+            color: #cbd5e1;
+            font-size: 14px;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            margin-bottom: 12px;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-elite {
+            background: linear-gradient(135deg, #d97706, #b45309);
+        }
+        
+        .btn-text {
+            color: #94a3b8;
+            font-size: 12px;
+            margin-top: 12px;
+        }
+        
+        /* TRIAL FORM SCREEN */
+        .trial-form-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: white;
+        }
+        
+        .trial-form-subtitle {
+            color: #cbd5e1;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 12px;
+            display: block;
+            color: #cbd5e1;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(148, 163, 184, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+        
+        .slider-value {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 12px;
+        }
+        
+        .emoji-buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+        
+        .emoji-btn {
+            aspect-ratio: 1;
+            border: 2px solid rgba(148, 163, 184, 0.3);
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 10px;
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 8px;
+        }
+        
+        .emoji-btn.selected {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.2);
+            transform: scale(1.1);
+        }
+        
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .btn-option {
+            padding: 12px;
+            border: 2px solid rgba(148, 163, 184, 0.3);
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #cbd5e1;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-option.selected {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+        
+        /* RESULT SCREEN */
+        .result-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 2px solid rgba(255, 152, 0, 0.5);
+            border-radius: 16px;
+            padding: 32px 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .result-emoji {
+            font-size: 72px;
+            margin-bottom: 16px;
+        }
+        
+        .result-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #f97316;
+            margin-bottom: 8px;
+        }
+        
+        .result-level {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: white;
+        }
+        
+        .result-description {
+            color: #cbd5e1;
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .result-action {
+            background: rgba(249, 115, 22, 0.1);
+            border-left: 4px solid #f97316;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-size: 14px;
+            color: #fed7aa;
+        }
+        
+        /* PAYWALL SCREEN */
+        .paywall-banner {
+            background: rgba(249, 115, 22, 0.1);
+            border: 1px solid rgba(249, 115, 22, 0.5);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        
+        .banner-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .banner-text {
+            color: #fed7aa;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+        
+        .paywall-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .pricing-grid {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .tier-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 2px solid rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .tier-card.popular {
+            border-color: rgba(59, 130, 246, 0.8);
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .tier-card.elite {
+            border-color: rgba(217, 119, 6, 0.8);
+            background: rgba(217, 119, 6, 0.1);
+        }
+        
+        .tier-badge {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+            color: white;
+        }
+        
+        .tier-badge.popular {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        }
+        
+        .tier-badge.elite {
+            background: linear-gradient(135deg, #d97706, #b45309);
+        }
+        
+        .tier-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            color: white;
+        }
+        
+        .tier-price {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .tier-price.pro { color: #3b82f6; }
+        .tier-price.elite { color: #d97706; }
+        .tier-price.ilead { color: #ec4899; }
+        
+        .tier-period {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+        
+        .tier-features {
+            list-style: none;
+            font-size: 12px;
+            color: #cbd5e1;
+            margin: 16px 0;
+            text-align: left;
+        }
+        
+        .tier-features li {
+            padding: 6px 0;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .tier-features li::before {
+            content: "✓";
+            color: #22c55e;
+            flex-shrink: 0;
+            font-weight: bold;
+        }
+        
+        .missing-section {
+            background: rgba(30, 41, 59, 0.6);
+            border-left: 4px solid #3b82f6;
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .missing-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #cbd5e1;
+        }
+        
+        .missing-items {
+            display: grid;
+            gap: 10px;
+        }
+        
+        .missing-item {
+            background: rgba(30, 41, 59, 0.5);
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        
+        .missing-item-title {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+        
+        .missing-item-desc {
+            color: #94a3b8;
+            font-size: 11px;
+        }
+        
+        /* DASHBOARD SCREEN */
+        .dashboard-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 2px solid;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+        
+        .dashboard-emoji {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+        
+        .dashboard-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: white;
+        }
+        
+        .dashboard-description {
+            color: #cbd5e1;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 480px) {
+            header {
+                padding: 12px 16px;
+            }
+            
+            main {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header id="header" style="display: none;">
+            <div class="header-left">
+                <div class="logo">⚡</div>
+                <div class="header-title" id="headerTitle">FLUXS</div>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </header>
+        
+        <main>
+            <!-- LOGIN SCREEN -->
+            <div id="loginScreen" class="screen active">
+                <div class="login-screen">
+                    <div class="login-card">
+                        <div class="login-logo">⚡</div>
+                        <div class="login-title">FLUXS</div>
+                        <div class="login-subtitle">Algorithm-driven energy optimization</div>
+                        <div class="login-hero">+ iLEAD The Way Framework</div>
+                        <div class="login-description">Detect your energy state. Peak your performance. Align with your identity.</div>
+                        <button class="btn" onclick="startTrial()">Start Free Trial</button>
+                        <div class="btn-text">No credit card • One free check-in • Three powerful tiers</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TRIAL FORM SCREEN -->
+            <div id="trialFormScreen" class="screen">
+                <div class="trial-form-title">Your Energy Right Now</div>
+                <div class="trial-form-subtitle">5 quick questions. 60 seconds. Then see your flux level.</div>
+                
+                <!-- Sleep Quality -->
+                <div class="form-group">
+                    <label class="form-label">
+                        Sleep Quality (last night)
+                        <span class="slider-value" id="sleepValue">3 / 5</span>
+                    </label>
+                    <input type="range" min="1" max="5" value="3" class="slider" id="sleep" oninput="updateSleepValue(this.value)">
+                </div>
+                
+                <!-- Mood -->
+                <div class="form-group">
+                    <label class="form-label">How are you feeling?</label>
+                    <div class="emoji-buttons">
+                        <button class="emoji-btn" onclick="selectMood('⚡')" data-value="1.0">⚡</button>
+                        <button class="emoji-btn" onclick="selectMood('😊')" data-value="0.8">😊</button>
+                        <button class="emoji-btn selected" onclick="selectMood('😐')" data-value="0.5">😐</button>
+                        <button class="emoji-btn" onclick="selectMood('🌫️')" data-value="0.2">🌫️</button>
+                        <button class="emoji-btn" onclick="selectMood('😴')" data-value="0.1">😴</button>
+                    </div>
+                </div>
+                
+                <!-- Energy -->
+                <div class="form-group">
+                    <label class="form-label">
+                        Energy Level
+                        <span class="slider-value" id="energyValue">3 / 5</span>
+                    </label>
+                    <input type="range" min="1" max="5" value="3" class="slider" id="energy" oninput="updateEnergyValue(this.value)">
+                </div>
+                
+                <!-- Focus -->
+                <div class="form-group">
+                    <label class="form-label">Focus Quality</label>
+                    <div class="button-group">
+                        <button class="btn-option" onclick="selectFocus('High')">🎯 High</button>
+                        <button class="btn-option selected" onclick="selectFocus('Medium')">📊 Medium</button>
+                        <button class="btn-option" onclick="selectFocus('Low')">🌀 Low</button>
+                    </div>
+                </div>
+                
+                <!-- Interruptions -->
+                <div class="form-group">
+                    <label class="form-label">
+                        Interruptions (this hour)
+                        <span class="slider-value" id="interruptValue">1</span>
+                    </label>
+                    <input type="range" min="0" max="10" value="1" class="slider" id="interruptions" oninput="updateInterruptValue(this.value)">
+                </div>
+                
+                <button class="btn" onclick="submitTrial()">Calculate My Flux Level</button>
+                <div class="btn-text">Your results appear immediately</div>
+            </div>
+            
+            <!-- RESULT SCREEN -->
+            <div id="resultScreen" class="screen">
+                <div class="result-card">
+                    <div class="result-emoji" id="resultEmoji">🟠</div>
+                    <div class="result-number" id="resultNumber">2.1</div>
+                    <div class="result-level" id="resultLevel">LOW FLUX</div>
+                    <div class="result-description" id="resultDescription">You're in a slump. Light tasks only.</div>
+                    <div class="result-action" id="resultAction">💡 Suggestion: Take a 15-minute walk. Email/admin tasks only.</div>
+                </div>
+                
+                <div style="text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 20px;">
+                    This is your one free result. To see more patterns, trends, and insights, unlock FLUXS.
+                </div>
+                
+                <button class="btn" onclick="goToPaywall()">See Your Full Profile (Unlock FLUXS)</button>
+            </div>
+            
+            <!-- PAYWALL SCREEN -->
+            <div id="paywallScreen" class="screen">
+                <div class="paywall-banner">
+                    <div class="banner-icon">⚡</div>
+                    <div class="banner-text">You've seen your energy state. Now unlock patterns, predictions, and peak timing.</div>
+                </div>
+                
+                <div class="paywall-title">Choose Your Tier</div>
+                
+                <div class="pricing-grid">
+                    <!-- PRO -->
+                    <div class="tier-card popular">
+                        <div class="tier-badge popular">POPULAR</div>
+                        <div class="tier-name">FLUXS Pro</div>
+                        <div class="tier-price pro">£99</div>
+                        <div class="tier-period">one-time monthly</div>
+                        <button class="btn" onclick="selectPlan('Pro')">Choose Pro</button>
+                        <ul class="tier-features">
+                            <li>Unlimited daily check-ins</li>
+                            <li>Pattern learning (7+ days)</li>
+                            <li>Instant Flux alerts</li>
+                            <li>FREE iLEAD (£27 value)</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- ELITE -->
+                    <div class="tier-card elite">
+                        <div class="tier-badge elite">FOR TEAMS</div>
+                        <div class="tier-name">FLUXS Elite</div>
+                        <div class="tier-price elite">£499</div>
+                        <div class="tier-period">for 5 people</div>
+                        <button class="btn btn-elite" onclick="selectPlan('Elite')">Choose Elite</button>
+                        <ul class="tier-features">
+                            <li>Everything in Pro</li>
+                            <li>Team dashboard</li>
+                            <li>Shared energy visibility</li>
+                            <li>iLEAD for all 5</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- iLEAD -->
+                    <div class="tier-card">
+                        <div class="tier-badge elite" style="background: linear-gradient(135deg, #ec4899, #f43f5e);">PREMIUM</div>
+                        <div class="tier-name">iLead The Way FLUXS</div>
+                        <div class="tier-price ilead">£999</div>
+                        <div class="tier-period">premium mastery</div>
+                        <button class="btn btn-elite" onclick="selectPlan('iLead')">Choose iLead</button>
+                        <ul class="tier-features">
+                            <li>Everything in Elite</li>
+                            <li>1:1 coaching</li>
+                            <li>VIP 24/7 support</li>
+                            <li>Executive network</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="missing-section">
+                    <div class="missing-title">What Unlocks With Upgrade</div>
+                    <div class="missing-items">
+                        <div class="missing-item">
+                            <div class="missing-item-title">📊 Your Energy Patterns</div>
+                            <div class="missing-item-desc">See your peak windows, slump times, and exact recovery time</div>
+                        </div>
+                        <div class="missing-item">
+                            <div class="missing-item-title">⭐ Instant Flux Alerts</div>
+                            <div class="missing-item-desc">Notifications when you have eureka moments (5-30 min window)</div>
+                        </div>
+                        <div class="missing-item">
+                            <div class="missing-item-title">🎯 Peak Scheduling</div>
+                            <div class="missing-item-desc">Know exactly when to do deep work vs meetings</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- DASHBOARD SCREEN -->
+            <div id="dashboardScreen" class="screen">
+                <div class="dashboard-card">
+                    <div class="dashboard-emoji">🎉</div>
+                    <div class="dashboard-title" id="dashboardTitle">Welcome!</div>
+                    <div class="dashboard-description">You now have full access to FLUXS. Start tracking your energy daily.</div>
+                    <button class="btn" onclick="logout()">Explore Dashboard</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        let state = {
+            isAuthenticated: localStorage.getItem('fluxs_user') ? true : false,
+            trialSubmitted: localStorage.getItem('fluxs_trial_submitted') ? true : false,
+            plan: localStorage.getItem('fluxs_plan') || null,
+            sleep: 3,
+            mood: 0.5,
+            energy: 3,
+            focus: 'Medium',
+            interruptions: 1
+        };
+        
+        function init() {
+            updateUI();
+        }
+        
+        function updateUI() {
+            if (state.isAuthenticated) {
+                document.getElementById('header').style.display = 'flex';
+                
+                if (state.plan) {
+                    showDashboard();
+                } else if (state.trialSubmitted) {
+                    showPaywall();
+                } else {
+                    showTrialForm();
+                }
+            } else {
+                document.getElementById('header').style.display = 'none';
+                showLogin();
+            }
+        }
+        
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+        
+        function showLogin() { showScreen('loginScreen'); }
+        function showTrialForm() { showScreen('trialFormScreen'); }
+        function showPaywall() { showScreen('paywallScreen'); }
+        function showDashboard() { showScreen('dashboardScreen'); }
+        
+        // TRIAL FORM HANDLERS
+        function updateSleepValue(val) {
+            state.sleep = val;
+            document.getElementById('sleepValue').textContent = val + ' / 5';
+        }
+        
+        function updateEnergyValue(val) {
+            state.energy = val;
+            document.getElementById('energyValue').textContent = val + ' / 5';
+        }
+        
+        function updateInterruptValue(val) {
+            document.getElementById('interruptValue').textContent = val;
+            state.interruptions = val;
+        }
+        
+        function selectMood(emoji) {
+            document.querySelectorAll('.emoji-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            
+            const values = { '⚡': 1.0, '😊': 0.8, '😐': 0.5, '🌫️': 0.2, '😴': 0.1 };
+            state.mood = values[emoji];
+        }
+        
+        function selectFocus(level) {
+            document.querySelectorAll('.btn-option').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            state.focus = level;
+        }
+        
+        // FLUX CALCULATION
+        function calculateFlux() {
+            let flux = (
+                (parseFloat(state.sleep) / 5) * 0.2 +
+                state.mood * 0.3 +
+                (parseFloat(state.energy) / 5) * 0.25 +
+                (state.focus === 'High' ? 1.0 : state.focus === 'Medium' ? 0.7 : 0.3) * 0.15 -
+                (parseInt(state.interruptions) * 0.1)
+            );
+            
+            flux = Math.max(1.0, Math.min(5.0, flux));
+            return parseFloat(flux.toFixed(1));
+        }
+        
+        function submitTrial() {
+            // REAL FLUX CALCULATION (based on actual inputs)
+            // Sleep: 1-5 scale, weighted 0.2
+            // Mood: multiplier (0.1-1.0), weighted 0.25
+            // Energy: 1-5 scale, weighted 0.25
+            // Focus: 0.3-1.0 multiplier, weighted 0.15
+            // Interruptions: penalty (0 per, -0.15 each), weighted 0.15
+            
+            const sleepScore = (parseInt(state.sleep) / 5) * 0.2;
+            const moodScore = state.mood * 0.25;
+            const energyScore = (parseInt(state.energy) / 5) * 0.25;
+            
+            const focusMap = { 'High': 1.0, 'Medium': 0.7, 'Low': 0.3 };
+            const focusScore = focusMap[state.focus] * 0.15;
+            
+            const interruptionPenalty = Math.min(parseInt(state.interruptions) * 0.15, 0.6);
+            const interruptScore = (1 - interruptionPenalty) * 0.15;
+            
+            // Weighted sum: 1.0-5.0 scale
+            let flux = (sleepScore + moodScore + energyScore + focusScore + interruptScore) * 5;
+            flux = Math.max(1.0, Math.min(5.0, flux));
+            flux = parseFloat(flux.toFixed(1));
+            
+            // Map to level (real variety based on inputs)
+            let level = '';
+            let emoji = '';
+            let description = '';
+            let action = '';
+            let color = '';
+            
+            if (flux <= 1.4) {
+                level = 'CRITICAL'; 
+                emoji = '🔴'; 
+                color = '#ef4444';
+                description = 'You need rest immediately. Leave work soon.';
+                action = '🚨 Action: Take a 2-4 hour break. Your body is telling you something.';
+            } else if (flux < 2.5) {
+                level = 'LOW FLUX'; 
+                emoji = '🟠'; 
+                color = '#f97316';
+                description = 'You\'re in a slump. Light tasks only.';
+                action = '💡 Action: Take a 15-minute walk. Email/admin tasks only.';
+            } else if (flux < 3.5) {
+                level = 'MEDIUM'; 
+                emoji = '🟡'; 
+                color = '#eab308';
+                description = 'Routine mode. Meetings and planning.';
+                action = '📋 Action: Handle email, meetings, planning tasks.';
+            } else if (flux < 4.5) {
+                level = 'HIGH'; 
+                emoji = '💪'; 
+                color = '#22c55e';
+                description = 'Strong energy. Block time for deep work.';
+                action = '⚡ Action: Schedule 2 hours for your hardest work.';
+            } else if (flux < 4.9) {
+                level = 'PEAK'; 
+                emoji = '⭐'; 
+                color = '#3b82f6';
+                description = 'You\'re in the zone. Protect this time.';
+                action = '🔥 Action: Do your most important work NOW.';
+            } else {
+                level = 'EUREKA'; 
+                emoji = '💥'; 
+                color = '#fbbf24';
+                description = 'Idea burst moment. You\'re at maximum clarity.';
+                action = '⚡ Action: CAPTURE THIS. Write down all ideas. This window closes in 5-30 min.';
+            }
+            
+            // Update result card styling
+            const resultCard = document.querySelector('.result-card');
+            resultCard.style.borderColor = color + '80';
+            
+            document.getElementById('resultEmoji').textContent = emoji;
+            document.getElementById('resultNumber').textContent = flux;
+            document.getElementById('resultNumber').style.color = color;
+            document.getElementById('resultLevel').textContent = level;
+            document.getElementById('resultDescription').textContent = description;
+            document.getElementById('resultAction').textContent = action;
+            document.getElementById('resultAction').style.borderLeftColor = color;
+            
+            state.trialSubmitted = true;
+            localStorage.setItem('fluxs_trial_submitted', 'true');
+            
+            showScreen('resultScreen');
+        }
+        
+        // ACTIONS
+        function startTrial() {
+            state.isAuthenticated = true;
+            localStorage.setItem('fluxs_user', 'true');
+            updateUI();
+        }
+        
+        function goToPaywall() {
+            showPaywall();
+        }
+        
+        function selectPlan(plan) {
+            state.plan = plan;
+            localStorage.setItem('fluxs_plan', plan);
+            document.getElementById('dashboardTitle').textContent = 'Welcome to FLUXS ' + plan + '!';
+            updateUI();
+        }
+        
+        function logout() {
+            state = {
+                isAuthenticated: false,
+                trialSubmitted: false,
+                plan: null,
+                sleep: 3,
+                mood: 0.5,
+                energy: 3,
+                focus: 'Medium',
+                interruptions: 1
+            };
+            localStorage.clear();
+            updateUI();
+        }
+        
+        // START
+        init();
+    </script>
+</body>
+</html>
